@@ -1,0 +1,17 @@
+FROM ubuntu:23.04
+ENV PYTHONUNBUFFERED: "1"
+ENV OCR_INPUT_DIRECTORY: "scan-input"
+ENV OCR_OUTPUT_DIRECTORY: "ocr-output"
+ENV OCR_OUTPUT_DIRECTORY_YEAR_MONTH: "0"
+ENV OCR_ON_SUCCESS_ARCHIVE: "0"
+ENV OCR_DESKEW: "1"
+ENV OCR_ON_SUCCESS_DELETE: "1"
+ENV OCR_JSON_SETTINGS: '{"rotate_pages": true, "skip_text": true, "language": "eng+fra", "output_type":"pdf"}'
+RUN apt update && apt upgrade
+RUN apt install python3 python3-watchdog python3-pdfminer ocrmypdf
+RUN apt-get autoclean
+COPY run.sh run.sh
+COPY RenameMyPDF.py RenameMyPDF.py
+COPY watcher.py watcher.py
+ENTRYPOINT ["/bin/bash"]
+CMD ["run.sh"]
