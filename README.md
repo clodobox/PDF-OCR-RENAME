@@ -11,7 +11,7 @@ You can edit RenameMyPDF.py to fit your needs.
 Thanks to OCRmyPDF for their Watchdog which works very well.
 
 This works on Synology x86-64 (with docker).
-You just need to run the commands below with "sudo".
+You just need to run the build commands below with "sudo".
 
 Docker volume needed :
 
