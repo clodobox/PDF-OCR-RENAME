@@ -1,34 +1,23 @@
-Sending build context to Docker daemon  6.687MB
-Step 1/20 : FROM alpine:latest
- ---> b2aa39c304c2
-Step 2/20 : ENV PYTHONUNBUFFERED: "1"
- ---> Using cache
- ---> 27928c909641
-Step 3/20 : ENV OCR_INPUT_DIRECTORY: "scan-input"
- ---> Using cache
- ---> c67a0f67df33
-Step 4/20 : ENV OCR_OUTPUT_DIRECTORY: "ocr-output"
- ---> Using cache
- ---> 760ed2ad8dcb
-Step 5/20 : ENV OCR_OUTPUT_DIRECTORY_YEAR_MONTH: "0"
- ---> Using cache
- ---> 02d8e68898be
-Step 6/20 : ENV OCR_ON_SUCCESS_ARCHIVE: "0"
- ---> Using cache
- ---> 7f9092f1d19e
-Step 7/20 : ENV OCR_DESKEW: "1"
- ---> Using cache
- ---> 7ef96842a2ab
-Step 8/20 : ENV OCR_ON_SUCCESS_DELETE: "1"
- ---> Using cache
- ---> e0beff683a16
-Step 9/20 : ENV OCR_JSON_SETTINGS: '{"rotate_pages": true, "skip_text": true, "language": "eng+fra", "output_type":"pdf"}'
- ---> Using cache
- ---> 41c63e2e0bf5
-Step 10/20 : ENV C_INCLUDE_PATH=$C_INCLUDE_PATH:/usr/include/freetype2
- ---> Using cache
- ---> fcbe92db36c0
-Step 11/20 : RUN apt install --update --no-cache python3 python3-dev tesseract-ocr tesseract-ocr-data-fra tesseract-ocr-data-deu ghostscript qpdf-dev build-base py3-pybind11-dev freetype-dev && ln -sf python3 /usr/bin/python
- ---> Running in a7b653a95dd7
-[91m/bin/sh: apt: not found
-[0m
+FROM alpine:latest
+ENV PYTHONUNBUFFERED: "1"
+ENV OCR_INPUT_DIRECTORY: "scan-input"
+ENV OCR_OUTPUT_DIRECTORY: "ocr-output"
+ENV OCR_OUTPUT_DIRECTORY_YEAR_MONTH: "0"
+ENV OCR_ON_SUCCESS_ARCHIVE: "0"
+ENV OCR_DESKEW: "1"
+ENV OCR_ON_SUCCESS_DELETE: "1"
+ENV OCR_JSON_SETTINGS: '{"rotate_pages": true, "skip_text": true, "language": "eng+fra", "output_type":"pdf"}'
+ENV C_INCLUDE_PATH=$C_INCLUDE_PATH:/usr/include/freetype2
+RUN apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
+RUN apk add freetype-dev python3-dev py3-pybind11-dev qpdf-dev
+RUN apk add tesseract-ocr tesseract-ocr-data-fra tesseract-ocr-data-deu ghostscript
+RUN python3 -m ensurepip
+RUN python3 -m venv venv
+RUN apk add build-base
+RUN pip3 install --no-cache --upgrade pip setuptools
+RUN pip3 install wheel watchdog pdfminer.six pikepdf ocrmypdf
+COPY run.sh run.sh
+COPY RenameMyPDF.py RenameMyPDF.py
+COPY watcher.py watcher.py
+ENTRYPOINT ["/bin/ash"]
+CMD ["run.sh"]
