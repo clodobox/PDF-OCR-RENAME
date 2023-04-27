@@ -59,7 +59,8 @@ class PDFHandler(FileSystemEventHandler):
 
                 # Find all occurrences of the patterns "PO-2X-XXXX", "SPO-2X-XXXX", and "RNWS-2X-XXXX" in the text
                 # matches = re.findall(r'(?:PO|SPO|RNWS)\d?-2\d-\d{4}', text)
-                matches = re.findall(r'(?:P0|PO|SPO|RNWS|SGR) ?\d?-?\d{1,2}-\d{1,4}', text)
+                matches = re.findall(r'(?:P0|PO|SPO|RNWS|SGR) ?\d?-?\d{1,2}-\d{1,4}', text, re.IGNORECASE)
+                matches = [match.upper() for match in matches]
 
 
                 if matches:
