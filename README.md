@@ -16,11 +16,13 @@ You just need to run the build commands below with "sudo".
 
 Docker volume needed :
 
+```
 scan-input
 ocr-output
 final-output
+```
 
-Build docker container
+**Build docker container**
 
 (add sudo before command for synology)
 
@@ -28,15 +30,3 @@ Build docker container
 docker-compose build
 docker-compose up -d
 ```
-
-
-*Old command*##
-
-Build docker container
-
-**Alpine container**
-
-docker build -t dexelpdfv3-alpine -f dockerfile.alpine .
-**Ubuntu container**
-
-docker build -t dexelpdfv3-ubuntu -f dockerfile.ubuntu .
