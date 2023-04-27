@@ -8,10 +8,11 @@ from watchdog.events import FileSystemEventHandler
 
 
 def autocorrect_match(match):
+    # Remove optional space after the prefix if present
+    match = match.replace(" ", "")
     # Special case: if the string is "P0-XX-XXXX", correct it to "PO-XX-XXXX"
     if match.startswith('P0-'):
         return 'PO' + match[2:]
-        
     parts = re.match(r'([A-Z]+)(\d?)-(\d{1,2})-(\d{1,4})', match)
 
     if parts is not None:
@@ -58,7 +59,8 @@ class PDFHandler(FileSystemEventHandler):
 
                 # Find all occurrences of the patterns "PO-2X-XXXX", "SPO-2X-XXXX", and "RNWS-2X-XXXX" in the text
                 # matches = re.findall(r'(?:PO|SPO|RNWS)\d?-2\d-\d{4}', text)
-                matches = re.findall(r'(?:PO|SPO|RNWS|SGR)\d?-(?:2\d-\d{4})', text)
+                matches = re.findall(r'(?:P0|PO|SPO|RNWS|SGR) ?\d?-?\d{1,2}-\d{1,4}', text)
+
 
                 if matches:
                     # Autocorrect the matches
@@ -117,4 +119,10 @@ if __name__ == "__main__":
 
     print(f'Watching folder: {path}')
 	
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    
     observer.join()
