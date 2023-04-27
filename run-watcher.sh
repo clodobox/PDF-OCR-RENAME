@@ -1,4 +1,4 @@
 #!/bin/bash
 
-exec python3 RenameMyPDF.py &
+echo 'Watcher started !'
 exec python3 watcher.py
