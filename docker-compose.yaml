@@ -4,8 +4,8 @@ services:
   renamer:
     build:
       context: .
-      dockerfile: ./dockerfile.ubuntu
-    command: run-renamer.sh
+      dockerfile: ./dockerfile.renamer
+    command: python3 ./RenameMyPDF.py
     volumes:
       - ./ocr-output:/ocr-output
       - ./final-output:/final-output
@@ -13,8 +13,8 @@ services:
   watcher:
     build:
       context: .
-      dockerfile: ./dockerfile.ubuntu
-    command: run-watcher.sh
+      dockerfile: ./dockerfile.ocr
+    command: python3 ./watcher.py
     volumes:
       - ./scan-input:/scan-input
       - ./ocr-output:/ocr-output

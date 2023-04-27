@@ -1,4 +1,4 @@
 #!/bin/bash
 
-echo 'Renamer started !'
-exec python3 RenameMyPDF.py
+# echo 'Renamer started !'
+python3 RenameMyPDF.py
