@@ -1,7 +1,8 @@
 # dexelpdf-v3
+
 This program was created for a business need: the electronic management of delivery notes.
 
-Here is my usage: 
+Here is my usage:
 
 > Scanner -> Scan2file(SMB) -> OCR -> detect string of text -> rename
 > PDF with the string of text
@@ -15,16 +16,27 @@ You just need to run the build commands below with "sudo".
 
 Docker volume needed :
 
-    scan-input
-    ocr-output
-    final-output
+scan-input
+ocr-output
+final-output
 
-  
-## Build docker container
+Build docker container
+
+(add sudo before command for synology)
+
+```
+docker-compose build
+docker-compose up
+```
+
+
+*Old command*##
+
+Build docker container
+
 **Alpine container**
 
-    docker build -t dexelpdfv3-alpine -f dockerfile.alpine .
-    
+docker build -t dexelpdfv3-alpine -f dockerfile.alpine .
 **Ubuntu container**
 
-    docker build -t dexelpdfv3-ubuntu -f dockerfile.ubuntu .
+docker build -t dexelpdfv3-ubuntu -f dockerfile.ubuntu .
