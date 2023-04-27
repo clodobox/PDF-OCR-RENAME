@@ -8,6 +8,10 @@ from watchdog.events import FileSystemEventHandler
 
 
 def autocorrect_match(match):
+    # Special case: if the string is "P0-XX-XXXX", correct it to "PO-XX-XXXX"
+    if match.startswith('P0-'):
+        return 'PO' + match[2:]
+        
     parts = re.match(r'([A-Z]+)(\d?)-(\d{1,2})-(\d{1,4})', match)
 
     if parts is not None:
