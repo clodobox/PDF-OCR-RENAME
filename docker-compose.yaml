@@ -10,7 +10,7 @@ services:
       - ./ocr-output:/ocr-output
       - ./final-output:/final-output
 
-  watcher:
+  ocr:
     build:
       context: .
       dockerfile: ./dockerfile.ocr
