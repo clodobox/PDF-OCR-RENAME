@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerfile.renamer
+    user: 1027:101
     command: run-renamer.sh
     volumes:
       - ./ocr-output:/ocr-output
@@ -14,6 +15,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerfile.ocr
+    user: 1027:101
     command: run-watcher.sh
     volumes:
       - ./scan-input:/scan-input

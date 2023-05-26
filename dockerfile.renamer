@@ -4,6 +4,7 @@ RUN apt -y install python3 python3-watchdog python3-pdfminer
 RUN apt-get -y autoclean
 COPY run-renamer.sh run-renamer.sh
 COPY RenameMyPDF.py RenameMyPDF.py
-RUN useradd -ms /bin/bash -u 1026 -g 100 user123
-USER user123
+RUN chmod 777 RenameMyPDF.py
+RUN chown 1027:100 RenameMyPDF.py
 ENTRYPOINT ["/bin/bash"]
+CMD ["python3 RenameMyPDF.py"]
