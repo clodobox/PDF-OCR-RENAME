@@ -4,21 +4,25 @@ services:
   renamer:
     build:
       context: .
-      dockerfile: ./dockerfile.renamer
-    user: 1027:101
-    command: run-renamer.sh
+      dockerfile: ./dockerfile.ren
+    user: 1026:101
     volumes:
       - ./ocr-output:/ocr-output
       - ./final-output:/final-output
+      - ./run-renamer.sh:/run-renamer.sh
+      - ./RenameMyPDF.py:/RenameMyPDF.py
+    command: run-renamer.sh
 
   ocr:
     build:
       context: .
       dockerfile: ./dockerfile.ocr
-    user: 1027:101
-    command: run-watcher.sh
+    user: 1026:101
     volumes:
       - ./scan-input:/scan-input
       - ./ocr-output:/ocr-output
+      - ./run-watcher.sh:/run-watcher.sh
+      - ./watcher.py:/watcher.py
+    command: run-watcher.sh
     env_file:
      - ./.env

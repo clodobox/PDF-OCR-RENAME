@@ -12,7 +12,7 @@ You can edit RenameMyPDF.py to fit your needs.
 Thanks to OCRmyPDF for their Watchdog which works very well.
 
 This works on Synology x86-64 (with docker).
-You just need to run the build commands below with "sudo".
+You just need to run the build commands below with "sudo" or use "Project" in Container Manager (DSM7.2+)
 
 Docker volume needed :
 
@@ -22,17 +22,11 @@ ocr-output
 final-output
 ```
 
----
-
-### **Build docker container**
+**Build docker container**
 
 (add sudo before command for synology)
 
 ```
-$ docker-compose build
-$ docker-compose up -d
+docker-compose build
+docker-compose up -d
 ```
-
-### Files permissions
-
-To avoid problems with access permission to the file, you can change the UID and GID in **docker-compose.yml** to match the desired user on the hosting server.

@@ -13,6 +13,8 @@ def autocorrect_match(match):
     # Special case: if the string is "P0-XX-XXXX", correct it to "PO-XX-XXXX"
     if match.startswith('P0-'):
         return 'PO' + match[2:]
+    if match.startswith('PQ-'):
+        return 'PO' + match[2:]
     parts = re.match(r'([A-Z]+)(\d?)-(\d{1,2})-(\d{1,4})', match)
 
     if parts is not None:
@@ -59,7 +61,7 @@ class PDFHandler(FileSystemEventHandler):
 
                 # Find all occurrences of the patterns "PO-2X-XXXX", "SPO-2X-XXXX", and "RNWS-2X-XXXX" in the text
                 # matches = re.findall(r'(?:PO|SPO|RNWS)\d?-2\d-\d{4}', text)
-                matches = re.findall(r'(?:P0|PO|SPO|RNWS|SGR) ?\d?-?\d{1,2}-\d{1,4}', text, re.IGNORECASE)
+                matches = re.findall(r'(?:P0|PO|SPO|RNWS|SGR|SSR) ?\d?-?\d{1,2}-\d{1,4}', text, re.IGNORECASE)
                 matches = [match.upper() for match in matches]
 
 
@@ -75,6 +77,12 @@ class PDFHandler(FileSystemEventHandler):
 
                     # Join the matches list into a single string separated by underscores
                     final_name = '_'.join(matches) + '.pdf'
+
+                    # Limit the file name length to a certain number of characters (e.g., 150 characters)
+                    # 150 total minus 4 for .pdf
+                    max_length = 150 - 4
+                    if len(final_name) > max_length:
+                        final_name = final_name[:max_length] + '.pdf'
 
                     # Check if a file with the same name already exists in the OUT folder
                     if os.path.exists(os.path.join('final-output', final_name)):
@@ -127,3 +135,4 @@ if __name__ == "__main__":
         observer.stop()
     
     observer.join()
+# Julien Lanza
