@@ -10,7 +10,7 @@ services:
       - ./ocr-output:/ocr-output
       - ./final-output:/final-output
       - ./run-renamer.sh:/run-renamer.sh
-      - ./RenameMyPDF.py:/RenameMyPDF.py
+      - ./renamemypdf.py:/renamemypdf.py
     command: run-renamer.sh
 
   ocr:

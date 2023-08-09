@@ -7,7 +7,7 @@ Here is my usage:
 > Scanner -> Scan2file(SMB) -> OCR -> detect string of text -> rename
 > PDF with the string of text
 
-You can edit RenameMyPDF.py to fit your needs.
+You can edit renamemypdf.py to fit your needs.
 
 Thanks to OCRmyPDF for their Watchdog which works very well.
 
