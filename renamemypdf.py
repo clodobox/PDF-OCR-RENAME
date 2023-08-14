@@ -135,4 +135,3 @@ if __name__ == "__main__":
         observer.stop()
     
     observer.join()
-# Julien Lanza
