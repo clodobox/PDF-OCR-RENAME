@@ -37,9 +37,6 @@ def autocorrect_match(match):
     else:
         return match
 
-
-
-
 class PDFHandler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
@@ -135,4 +132,3 @@ if __name__ == "__main__":
         observer.stop()
     
     observer.join()
-# Julien Lanza
