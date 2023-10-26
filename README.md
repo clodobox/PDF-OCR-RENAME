@@ -1,4 +1,4 @@
-# dexelpdf-v3
+# PDF-OCR-RENAME
 
 This program was created for a business need: the electronic management of delivery notes.
 
