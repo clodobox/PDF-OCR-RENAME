@@ -1,6 +1,9 @@
-FROM ubuntu:23.04
-RUN apt -y update && apt -y upgrade
-RUN apt -y install python3 python3-watchdog python3-pdfminer
-RUN apt-get -y autoclean
+FROM archlinux:latest
+RUN pacman -Syu --noconfirm
+RUN pacman -S --noconfirm python python-pip libimagequant
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install watchdog pdfminer.six
+RUN pacman -Scc --noconfirm
 ENTRYPOINT ["/bin/bash"]
 CMD ["python3 renamemypdf.py"]

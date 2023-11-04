@@ -1,10 +1,8 @@
-FROM ubuntu:23.04
-RUN apt -y update && apt -y upgrade
-RUN apt -y install python3 python3-watchdog python3-pdfminer ocrmypdf tesseract-ocr-fra tesseract-ocr-deu
-RUN apt-get -y autoclean
-#
-# Depending on the system on which this container is running, it may be necessary to configure
-# this line in relation to an existing user on the OS.
-#
-# RUN chown 1026:100 watcher.py
+FROM archlinux:latest
+RUN pacman -Syu --noconfirm
+RUN pacman -S --noconfirm python python-pip tesseract tesseract-data-fra tesseract-data-deu tesseract-data-eng ghostscript
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install watchdog pdfminer.six ocrmypdf
+RUN pacman -Scc --noconfirm
 ENTRYPOINT ["/bin/bash"]
