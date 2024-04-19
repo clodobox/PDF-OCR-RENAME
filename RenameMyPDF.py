@@ -6,36 +6,69 @@ from pdfminer.high_level import extract_text
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+# Old OCR autocorrect
+#
+# def autocorrect_match(match):
+#   # Remove optional space after the prefix if present
+#   match = match.replace(" ", "")
+#   # Special case: if the string is "P0-XX-XXXX", correct it to "PO-XX-XXXX"
+#   if match.startswith('P0-'):
+#       return 'PO' + match[2:]
+#   if match.startswith('PQ-'):
+#       return 'PO' + match[2:]
+#   parts = re.match(r'([A-Z]+)(\d?)-(\d{1,2})-(\d{1,4})', match)
+#
+#    if parts is not None:
+#        prefix = parts.group(1)
+#        second_digit = parts.group(3)
+#        last_digits = parts.group(4)
+#
+#        # If the second part has only one digit, pad it with a '0' on the left
+#        if len(second_digit) == 1 and second_digit != '2':
+#            second_digit = "2" + second_digit
+#        # If the second part has two digits and doesn't start with '2', replace the first digit with '2'
+#        elif len(second_digit) == 2 and second_digit[0] != '2':
+#            second_digit = '2' + second_digit[1:]
+#
+#        # Ensure the last part has 4 characters
+#        last_digits = last_digits.zfill(4)
+#
+#        corrected = f'{prefix}-{second_digit}-{last_digits}'
+#        return corrected
+#    else:
+#        return match
 
 def autocorrect_match(match):
-    # Remove optional space after the prefix if present
     match = match.replace(" ", "")
-    # Special case: if the string is "P0-XX-XXXX", correct it to "PO-XX-XXXX"
+    match = match.replace("O", "0")  # Replace 'O' with '0'
+    match = match.replace("I", "1")  # Replace 'I' with '1'
+    match = match.replace("S", "5")  # Replace 'S' with '5'
+    match = match.replace("B", "8")  # Replace 'B' with '8'
+    match = match.replace("Z", "2")  # Replace 'Z' with '2'
+    match = match.replace("G", "6")  # Replace 'G' with '6'
+
     if match.startswith('P0-'):
-        return 'PO' + match[2:]
-    if match.startswith('PQ-'):
-        return 'PO' + match[2:]
-    parts = re.match(r'([A-Z]+)(\d?)-(\d{1,2})-(\d{1,4})', match)
+        match = 'PO' + match[2:]
+    elif match.startswith('PQ-'):
+        match = 'PO' + match[2:]
+
+    parts = re.match(r'([A-Z]+)[-]?(\d{1,2})[-]?(\d{1,4})', match)
 
     if parts is not None:
         prefix = parts.group(1)
-        second_digit = parts.group(3)
-        last_digits = parts.group(4)
+        second_part = parts.group(2).zfill(2)
+        last_part = parts.group(3).zfill(4)
 
-        # If the second part has only one digit, pad it with a '0' on the left
-        if len(second_digit) == 1 and second_digit != '2':
-            second_digit = "2" + second_digit
-        # If the second part has two digits and doesn't start with '2', replace the first digit with '2'
-        elif len(second_digit) == 2 and second_digit[0] != '2':
-            second_digit = '2' + second_digit[1:]
+        if prefix == "PO" and second_part[0] != "2":
+            second_part = "2" + second_part[1:]
+        elif prefix in ["SPO", "RNWS", "SGR", "SSR"] and second_part[0] != "2":
+            second_part = "2" + second_part[1:]
 
-        # Ensure the last part has 4 characters
-        last_digits = last_digits.zfill(4)
-
-        corrected = f'{prefix}-{second_digit}-{last_digits}'
+        corrected = f"{prefix}-{second_part}-{last_part}"
         return corrected
     else:
         return match
+
 
 class PDFHandler(FileSystemEventHandler):
     def on_created(self, event):
@@ -132,3 +165,4 @@ if __name__ == "__main__":
         observer.stop()
     
     observer.join()
+# Julien Lanza
