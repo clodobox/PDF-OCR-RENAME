@@ -91,19 +91,27 @@ def execute_ocrmypdf(file_path):
         log.info(f"Gave up waiting for {file_path} to become ready")
         return
     log.info(f'Attempting to OCRmyPDF to: {output_path}')
+
+    creation_time = file_path.stat().st_mtime
+    modification_time = file_path.stat().st_mtime
+    
     exit_code = ocrmypdf.ocr(
         input_file=file_path,
-        output_file=output_path,
+        output_file=output_path, 
         deskew=DESKEW,
         **OCR_JSON_SETTINGS,
     )
     if exit_code == 0:
+        os.utime(output_path, (creation_time, modification_time))
+
         if ON_SUCCESS_DELETE:
             log.info(f'OCR is done. Deleting: {file_path}')
             file_path.unlink()
         elif ON_SUCCESS_ARCHIVE:
             log.info(f'OCR is done. Archiving {file_path.name} to {ARCHIVE_DIRECTORY}')
-            shutil.move(file_path, f'{ARCHIVE_DIRECTORY}/{file_path.name}')
+            archive_path = f'{ARCHIVE_DIRECTORY}/{file_path.name}'
+            shutil.move(file_path, archive_path)
+            os.utime(archive_path, (creation_time, modification_time))
         else:
             log.info('OCR is done')
     else:

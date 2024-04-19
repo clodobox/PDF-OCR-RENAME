@@ -40,17 +40,17 @@ from watchdog.events import FileSystemEventHandler
 
 def autocorrect_match(match):
     match = match.replace(" ", "")
-    match = match.replace("O", "0")  # Replace 'O' with '0'
-    match = match.replace("I", "1")  # Replace 'I' with '1'
-    match = match.replace("S", "5")  # Replace 'S' with '5'
-    match = match.replace("B", "8")  # Replace 'B' with '8'
-    match = match.replace("Z", "2")  # Replace 'Z' with '2'
-    match = match.replace("G", "6")  # Replace 'G' with '6'
 
     if match.startswith('P0-'):
         match = 'PO' + match[2:]
     elif match.startswith('PQ-'):
         match = 'PO' + match[2:]
+    elif match.startswith('RNW-'):
+        match = 'RNWS' + match[3:]
+    elif match.startswith('5P0-'):
+        match = 'SPO' + match[3:]
+    elif match.startswith('56R-'):
+        match = 'SGR' + match[3:]
 
     parts = re.match(r'([A-Z]+)[-]?(\d{1,2})[-]?(\d{1,4})', match)
 
@@ -59,9 +59,11 @@ def autocorrect_match(match):
         second_part = parts.group(2).zfill(2)
         last_part = parts.group(3).zfill(4)
 
-        if prefix == "PO" and second_part[0] != "2":
-            second_part = "2" + second_part[1:]
-        elif prefix in ["SPO", "RNWS", "SGR", "SSR"] and second_part[0] != "2":
+        # Replace characters only in the second and last parts
+        second_part = second_part.replace("O", "0").replace("I", "1").replace("S", "5").replace("B", "8").replace("Z", "2").replace("G", "6")
+        last_part = last_part.replace("O", "0").replace("I", "1").replace("S", "5").replace("B", "8").replace("Z", "2").replace("G", "6")
+
+        if prefix in ["PO", "SPO", "RNWS", "SGR", "SSR"]:
             second_part = "2" + second_part[1:]
 
         corrected = f"{prefix}-{second_part}-{last_part}"

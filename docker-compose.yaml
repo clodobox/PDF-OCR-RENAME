@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  ocr:
+  bl-ocr:
     build:
       context: .
       dockerfile_inline: |
@@ -45,15 +45,15 @@ services:
     #
     # NFS
     #
-      - scan-input:/scan-input
-      - ocr-output:/ocr-output
+      - bl-scan-input:/scan-input
+      - bl-ocr-output:/ocr-output
+    env_file:
     # Don't try to put environmental variables here.
     # Docker-compose doesn't support JSON.
-    env_file:
       - .env
     command:
       - run-watcher.sh
-  renamer:
+  bl-renamer:
     build:
       context: .
       dockerfile_inline: |
@@ -78,23 +78,23 @@ services:
     #  - ./ocr-output:/ocr-output
     #  - ./final-output:/final-output
     #NFS
-      - ocr-output:/ocr-output
-      - final-output:/final-output
+      - bl-ocr-output:/ocr-output
+      - bl-final-output:/final-output
     command: run-renamer.sh
 # NFS Volumes
 #   + Not needed for local mount point
 volumes:
-  scan-input:
+  bl-scan-input:
     driver_opts:
       type: "nfs"
       o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
       device: ":/volume1/Docker/BL/scan-input"
-  ocr-output:
+  bl-ocr-output:
     driver_opts:
       type: "nfs"
       o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
       device: ":/volume1/Docker/BL/ocr-output"
-  final-output:
+  bl-final-output:
     driver_opts:
       type: "nfs"
       o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
