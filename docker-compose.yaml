@@ -45,8 +45,8 @@ services:
     #
     # NFS
     #
-      - bl-scan-input:/scan-input
-      - bl-ocr-output:/ocr-output
+      - scan-input:/scan-input
+      - ocr-output:/ocr-output
     env_file:
     # Don't try to put environmental variables here.
     # Docker-compose doesn't support JSON.
@@ -78,24 +78,24 @@ services:
     #  - ./ocr-output:/ocr-output
     #  - ./final-output:/final-output
     #NFS
-      - bl-ocr-output:/ocr-output
-      - bl-final-output:/final-output
+      - ocr-output:/ocr-output
+      - final-output:/final-output
     command: run-renamer.sh
 # NFS Volumes
 #   + Not needed for local mount point
 volumes:
-  bl-scan-input:
+  scan-input:
     driver_opts:
       type: "nfs"
       o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-      device: ":/volume1/Docker/BL/scan-input"
-  bl-ocr-output:
+      device: ":/volume1/Docker/dexelpdfv3/scan-input"
+  ocr-output:
     driver_opts:
       type: "nfs"
       o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-      device: ":/volume1/Docker/BL/ocr-output"
-  bl-final-output:
+      device: ":/volume1/Docker/dexelpdfv3/ocr-output"
+  final-output:
     driver_opts:
       type: "nfs"
       o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-      device: ":/volume1/Docker/BL/final-output"
+      device: ":/volume1/Docker/dexelpdfv3/final-output"
