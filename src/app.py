@@ -125,8 +125,6 @@ def process_pdf(path):
     if path_str.endswith('.pdf'):
         print(f'[renamer] Processing file: {path_str}')
 
-        time.sleep(3)
-
         try:
             text = extract_text(path_str)
             matches = re.findall(r'(?:P0|PO|SPO|RNWS|SGR|SSR) ?\d?-?\d{1,2}-\d{1,4}', text, re.IGNORECASE)
