@@ -1,0 +1,5 @@
+pikepdf
+ocrmypdf
+pyyaml
+deskew
+watchdog
