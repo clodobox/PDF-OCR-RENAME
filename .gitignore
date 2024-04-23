@@ -5,6 +5,7 @@ env.sh
 dockerfile.bak
 backup/
 .env/
+env/
 ocr-output/
 scan-input/
 requirements.txt
