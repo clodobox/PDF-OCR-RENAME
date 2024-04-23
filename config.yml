@@ -2,7 +2,7 @@ ocr:
   input_directory: 'input'
   output_directory: 'processed'
   backup_directory: ''
-  on_success_delete: false
+  on_success_delete: true
   force_ocr: true
   language: 'fra'
   image_dpi:  # Image resolution in DPI for OCR
