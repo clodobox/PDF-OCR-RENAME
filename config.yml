@@ -1,0 +1,13 @@
+input_directory: 'input'
+output_directory: 'processed2'
+backup_directory: ''
+on_success_delete: false
+deskew: false
+ocr_json_settings: {}
+poll_new_file_seconds: 1
+use_polling: false
+retries_loading_file: 5
+loglevel: 'INFO'
+patterns:
+  - '*.pdf'
+  - '*.PDF'

@@ -9,3 +9,4 @@ env/
 ocr-output/
 scan-input/
 requirements.txt
+src/appworking.py

@@ -18,22 +18,24 @@ from pdfminer.high_level import extract_text
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 from watchdog.observers.polling import PollingObserver
+import yaml
+
+with open('./config.yml', 'r') as file:
+    config = yaml.safe_load(file)
+
+INPUT_DIRECTORY = config['input_directory']
+OUTPUT_DIRECTORY = config['output_directory']
+BACKUP_DIRECTORY = config['backup_directory']
+ON_SUCCESS_DELETE = config['on_success_delete']
+DESKEW = config['deskew']
+OCR_JSON_SETTINGS = config['ocr_json_settings']
+POLL_NEW_FILE_SECONDS = config['poll_new_file_seconds']
+USE_POLLING = config['use_polling']
+RETRIES_LOADING_FILE = config['retries_loading_file']
+LOGLEVEL = config['loglevel']
+PATTERNS = config['patterns']
 
 # pylint: disable=logging-format-interpolation
-
-def getenv_bool(name: str, default: str = 'False'):
-    return os.getenv(name, default).lower() in ('true', 'yes', 'y', '1')
-
-INPUT_DIRECTORY = os.getenv('OCR_INPUT_DIRECTORY', 'input')
-OUTPUT_DIRECTORY = os.getenv('OCR_OUTPUT_DIRECTORY', 'processed')
-ON_SUCCESS_DELETE = getenv_bool('OCR_ON_SUCCESS_DELETE')
-DESKEW = getenv_bool('OCR_DESKEW')
-OCR_JSON_SETTINGS = json.loads(os.getenv('OCR_JSON_SETTINGS', '{}'))
-POLL_NEW_FILE_SECONDS = int(os.getenv('OCR_POLL_NEW_FILE_SECONDS', '1'))
-USE_POLLING = getenv_bool('OCR_USE_POLLING')
-RETRIES_LOADING_FILE = int(os.getenv('OCR_RETRIES_LOADING_FILE', '5'))
-LOGLEVEL = os.getenv('OCR_LOGLEVEL', 'INFO')
-PATTERNS = ['*.pdf', '*.PDF']
 
 log = logging.getLogger('ocrmypdf-watcher')
 
@@ -62,6 +64,11 @@ def execute_ocrmypdf(file_path):
         log.info(f"[watcher] Gave up waiting for {file_path} to become ready")
         return
     log.info(f'[watcher] Attempting to OCRmyPDF to: {output_path}')
+
+    if BACKUP_DIRECTORY:
+        backup_path = Path(BACKUP_DIRECTORY) / file_path.name
+        log.info(f'[watcher] Backing up file to: {backup_path}')
+        shutil.copy2(file_path, backup_path)
 
     exit_code = ocrmypdf.ocr(
         input_file=file_path,
@@ -154,6 +161,11 @@ class HandleObserverEvent(PatternMatchingEventHandler):
         if event.event_type in ['created']:
             execute_ocrmypdf(event.src_path)
 
+def ensure_directory_exists(directory):
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory)
+        log.info(f'[watcher] Created directory: {directory}')
+
 def main():
     ocrmypdf.configure_logging(
         verbosity=(
@@ -184,7 +196,12 @@ def main():
         log.error('[watcher] OCR_JSON_SETTINGS should not specify input file or output file')
         sys.exit(1)
     
+    ensure_directory_exists(INPUT_DIRECTORY)
+    ensure_directory_exists(OUTPUT_DIRECTORY)
+    ensure_directory_exists(BACKUP_DIRECTORY)
+    
     handler = HandleObserverEvent(patterns=PATTERNS)
+    
     if USE_POLLING:
         observer = PollingObserver()
     else:
