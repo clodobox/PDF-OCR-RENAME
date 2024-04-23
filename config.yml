@@ -4,7 +4,7 @@ ocr:
   backup_directory: ''
   on_success_delete: true
   force_ocr: true
-  language: 'fra'
+  language: 'fra+eng+deu'
   image_dpi:  # Image resolution in DPI for OCR
   use_threads: True # Number of threads to use for parallel processing
   author: ''  # PDF author
@@ -70,7 +70,7 @@ logging:
   filename: 'ocr.log'
   level: 'INFO'
   format: '%(asctime)s - %(levelname)s - %(message)s'
-  mode: 'daily'  # 'daily' pour un log par jour, 'single' pour un seul fichier log
+  mode: 'single'  # 'daily' pour un log par jour, 'single' pour un seul fichier log
   max_size: 10485760  # Taille maximale du fichier log en octets (10 MB ici)
   backup_count: 5  # Nombre de fichiers log à conserver
   retention_days: 30  # Supprimer les logs plus vieux que 30 jours
