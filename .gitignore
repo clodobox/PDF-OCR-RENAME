@@ -4,8 +4,8 @@
 env.sh
 dockerfile.bak
 backup/
-.env/
 env/
 ocr-output/
 scan-input/
 src/appworking.py
+log/*.log

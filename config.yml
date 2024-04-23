@@ -6,7 +6,7 @@ ocr:
   force_ocr: true
   language: 'fra'
   image_dpi:  # Image resolution in DPI for OCR
-  use_threads:  # Number of threads to use for parallel processing
+  use_threads: True # Number of threads to use for parallel processing
   author: ''  # PDF author
   subject: ''  # PDF subject
   rotate_pages: true  # Automatic page rotation
@@ -22,8 +22,8 @@ ocr:
   jbig2_lossy:  # Lossy JBIG2 compression, useful for reducing PDF size
   tesseract_oem:  # Tesseract engine mode (0-3), 3 is the default mode and the most accurate
   ocr_json_settings: {}
-  poll_new_file_seconds:
-  use_polling: false
+  poll_new_file_seconds: 5
+  use_polling: true
   retries_loading_file: 5
   loglevel: 'INFO'
   patterns:
@@ -64,3 +64,13 @@ autocorrect:
       'B': '8'
       'Z': '2'
       'G': '6'
+
+logging:
+  directory: 'log'
+  filename: 'ocr.log'
+  level: 'INFO'
+  format: '%(asctime)s - %(levelname)s - %(message)s'
+  mode: 'daily'  # 'daily' pour un log par jour, 'single' pour un seul fichier log
+  max_size: 10485760  # Taille maximale du fichier log en octets (10 MB ici)
+  backup_count: 5  # Nombre de fichiers log à conserver
+  retention_days: 30  # Supprimer les logs plus vieux que 30 jours

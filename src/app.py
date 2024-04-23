@@ -18,6 +18,7 @@ from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 from watchdog.observers.polling import PollingObserver
 import yaml
+from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 with open('./config.yml', 'r') as file:
     config = yaml.safe_load(file)
@@ -25,26 +26,68 @@ with open('./config.yml', 'r') as file:
 OCR_CONFIG = {**config['ocr']}
 AUTOCORRECT_CONFIG = config['autocorrect']
 
+def delete_old_logs(log_dir, retention_days):
+    now = datetime.now()
+    for file in log_dir.glob('*'):
+        if file.is_file():
+            modified_time = datetime.fromtimestamp(file.stat().st_mtime)
+            if (now - modified_time).days > retention_days:
+                file.unlink()
+
+def setup_logging(config):
+    log_dir = Path(config['logging']['directory'])
+    log_dir.mkdir(parents=True, exist_ok=True)  # Crée le dossier "log" s'il n'existe pas
+
+    log_file = log_dir / config['logging']['filename']
+    log_level = getattr(logging, config['logging']['level'].upper())
+    log_format = config['logging']['format']
+
+    if config['logging']['mode'] == 'daily':
+        handler = TimedRotatingFileHandler(log_file, when='midnight', backupCount=config['logging']['backup_count'])
+    else:
+        max_bytes = config['logging']['max_size']
+        handler = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=config['logging']['backup_count'])
+
+    handler.setFormatter(logging.Formatter(log_format))
+
+    logger = logging.getLogger()
+    logger.setLevel(log_level)
+    logger.addHandler(handler)
+
+    # Supprimez les anciens fichiers log
+    delete_old_logs(log_dir, config['logging']['retention_days'])
+
+setup_logging(config)
+
 # pylint: disable=logging-format-interpolation
 
-log = logging.getLogger('ocrmypdf-watcher')
+def delete_old_logs(log_dir, retention_days):
+    now = datetime.now()
+    for file in log_dir.glob('*'):
+        if file.is_file():
+            modified_time = datetime.fromtimestamp(file.stat().st_mtime)
+            if (now - modified_time).days > retention_days:
+                file.unlink()
 
 def wait_for_file_ready(file_path):
-    retries = OCR_CONFIG['retries_loading_file']
-    while retries:
+    retries = OCR_CONFIG.get('retries_loading_file', 5)  # Get the number of retries from the config, default to 5
+    poll_seconds = OCR_CONFIG.get('poll_new_file_seconds', 5)  # Get the number of seconds to wait between retries, default to 5
+
+    for i in range(retries):
         try:
             pdf = pikepdf.open(file_path)
-        except (FileNotFoundError, pikepdf.PdfError) as e:
-            log.info(f"[watcher] File {file_path} is not ready yet")
-            log.debug("[watcher] Exception was", exc_info=e)
-            time.sleep(OCR_CONFIG['poll_new_file_seconds'])
-            retries -= 1
-        else:
             pdf.close()
             return True
-    return False
+        except (FileNotFoundError, pikepdf._core.PdfError) as e:
+            if i == retries - 1:
+                logging.info(f'[watcher] Gave up waiting for {file_path} to become ready')
+                return False
+            else:
+                logging.info(f'[watcher] File {file_path} is not ready yet')
+                time.sleep(poll_seconds)
 
 def execute_ocrmypdf(file_path):
+    logger = logging.getLogger()
     ocr_args = {
         'language': OCR_CONFIG.get('language'),
         'image_dpi': OCR_CONFIG.get('image_dpi'),
@@ -75,33 +118,39 @@ def execute_ocrmypdf(file_path):
     file_path = Path(file_path)
     output_path = Path(OCR_CONFIG['output_directory']) / file_path.name
 
-    log.info("[watcher] " + "-" * 20)
-    log.info(f'[watcher] New file: {file_path}. Waiting until fully loaded...')
+    logger.info("[watcher] " + "-" * 20)
+    logger.info(f'[watcher] New file: {file_path}. Waiting until fully loaded...')
     if not wait_for_file_ready(file_path):
-        log.info(f"[watcher] Gave up waiting for {file_path} to become ready")
+        logger.info(f"[watcher] Gave up waiting for {file_path} to become ready")
         return
-    log.info(f'[watcher] Attempting to OCRmyPDF to: {output_path}')
+    logger.info(f'[watcher] Attempting to OCRmyPDF to: {output_path}')
 
     if OCR_CONFIG['backup_directory']:
         backup_path = Path(OCR_CONFIG['backup_directory']) / file_path.name
-        log.info(f'[watcher] Backing up file to: {backup_path}')
+        logger.info(f'[watcher] Backing up file to: {backup_path}')
         shutil.copy2(file_path, backup_path)
 
-    exit_code = ocrmypdf.ocr(
-        input_file=str(file_path),
-        output_file=str(output_path),
-        **ocr_args,
-    )
+    try:
+        exit_code = ocrmypdf.ocr(
+            input_file=str(file_path),
+            output_file=str(output_path),
+            **ocr_args,
+        )
+    except ValueError as e:
+        logger.error(f"[watcher] OCRmyPDF failed with error: {str(e)}")
+        # Handle error case, e.g. move file to error directory
+        return
+
     if exit_code == 0:
         if OCR_CONFIG['on_success_delete']:
-            log.info(f'[watcher] OCR is done. Deleting: {file_path}')
+            logger.info(f'[watcher] OCR is done. Deleting: {file_path}')
             file_path.unlink()
         else:
-            log.info('[watcher] OCR is done')
+            logger.info('[watcher] OCR is done')
         
         process_pdf(output_path)
     else:
-        log.info('[watcher] OCR is done')
+        logger.info('[watcher] OCR is done with errors')
 
 def autocorrect_match(match, autocorrect_config):
     match = match.replace(" ", "")
@@ -173,7 +222,7 @@ class HandleObserverEvent(PatternMatchingEventHandler):
 def ensure_directory_exists(directory):
     if directory and not os.path.exists(directory):
         os.makedirs(directory)
-        log.info(f'[watcher] Created directory: {directory}')
+        logging.info(f'[watcher] Created directory: {directory}')
 
 def main():
     ocrmypdf.configure_logging(
@@ -184,18 +233,18 @@ def main():
         ),
         manage_root_logger=True,
     )
-    log.setLevel(OCR_CONFIG['loglevel'])
-    log.info(
+    logging.getLogger().setLevel(OCR_CONFIG['loglevel'])
+    logging.info(
         f"[watcher] Starting OCRmyPDF watcher with config:\n"
         f"Input Directory: {OCR_CONFIG['input_directory']}\n"
         f"Output Directory: {OCR_CONFIG['output_directory']}\n"
     )
-    log.debug(
+    logging.debug(
         f"[watcher] OCR_CONFIG: {OCR_CONFIG}\n"
         f"AUTOCORRECT_CONFIG: {AUTOCORRECT_CONFIG}\n"
     )
     if 'input_file' in OCR_CONFIG['ocr_json_settings'] or 'output_file' in OCR_CONFIG['ocr_json_settings']:
-        log.error('[watcher] OCR_JSON_SETTINGS should not specify input file or output file')
+        logging.error('[watcher] OCR_JSON_SETTINGS should not specify input file or output file')
         sys.exit(1)
     
     ensure_directory_exists(OCR_CONFIG['input_directory'])
@@ -209,7 +258,7 @@ def main():
         observer = Observer()
     observer.schedule(handler, OCR_CONFIG['input_directory'], recursive=False)
     observer.start()
-    log.info('[watcher] Watching for new files...')
+    logging.info('[watcher] Watching for new files...')
     try:
         while True:
             time.sleep(1)
