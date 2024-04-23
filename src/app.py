@@ -23,31 +23,22 @@ import yaml
 with open('./config.yml', 'r') as file:
     config = yaml.safe_load(file)
 
-INPUT_DIRECTORY = config['input_directory']
-OUTPUT_DIRECTORY = config['output_directory']
-BACKUP_DIRECTORY = config['backup_directory']
-ON_SUCCESS_DELETE = config['on_success_delete']
-DESKEW = config['deskew']
-OCR_JSON_SETTINGS = config['ocr_json_settings']
-POLL_NEW_FILE_SECONDS = config['poll_new_file_seconds']
-USE_POLLING = config['use_polling']
-RETRIES_LOADING_FILE = config['retries_loading_file']
-LOGLEVEL = config['loglevel']
-PATTERNS = config['patterns']
+OCR_CONFIG = {**config['ocr']}
+AUTOCORRECT_CONFIG = config['autocorrect']
 
 # pylint: disable=logging-format-interpolation
 
 log = logging.getLogger('ocrmypdf-watcher')
 
 def wait_for_file_ready(file_path):
-    retries = RETRIES_LOADING_FILE
+    retries = OCR_CONFIG['retries_loading_file']
     while retries:
         try:
             pdf = pikepdf.open(file_path)
         except (FileNotFoundError, pikepdf.PdfError) as e:
             log.info(f"[watcher] File {file_path} is not ready yet")
             log.debug("[watcher] Exception was", exc_info=e)
-            time.sleep(POLL_NEW_FILE_SECONDS)
+            time.sleep(OCR_CONFIG['poll_new_file_seconds'])
             retries -= 1
         else:
             pdf.close()
@@ -55,8 +46,35 @@ def wait_for_file_ready(file_path):
     return False
 
 def execute_ocrmypdf(file_path):
+    ocr_args = {
+        'language': OCR_CONFIG.get('language'),
+        'image_dpi': OCR_CONFIG.get('image_dpi'),
+        'use_threads': OCR_CONFIG.get('use_threads'),
+        'author': OCR_CONFIG.get('author'),
+        'subject': OCR_CONFIG.get('subject'),
+        'rotate_pages': OCR_CONFIG.get('rotate_pages'),
+        'remove_background': OCR_CONFIG.get('remove_background'),
+        'deskew': OCR_CONFIG.get('deskew'),
+        'oversample': OCR_CONFIG.get('oversample'),
+        'optimize': OCR_CONFIG.get('optimize'),
+        'tesseract_thresholding': OCR_CONFIG.get('tesseract_thresholding'),
+        'tesseract_timeout': OCR_CONFIG.get('tesseract_timeout'),
+        'rotate_pages_threshold': OCR_CONFIG.get('rotate_pages_threshold'),
+        'pdfa_image_compression': OCR_CONFIG.get('pdfa_image_compression'),
+        'progress_bar': OCR_CONFIG.get('progress_bar'),
+        'jpg_quality': OCR_CONFIG.get('jpg_quality'),
+        'png_quality': OCR_CONFIG.get('png_quality'),
+        'jbig2_lossy': OCR_CONFIG.get('jbig2_lossy'),
+        'jbig2_page_group_size': OCR_CONFIG.get('jbig2_page_group_size'),
+        'tesseract_oem': OCR_CONFIG.get('tesseract_oem'),
+        'force_ocr': OCR_CONFIG.get('force_ocr'),
+    }
+    
+    ocr_args = {k: v for k, v in ocr_args.items() if v is not None}
+    ocr_args.update(OCR_CONFIG['ocr_json_settings'])
+    
     file_path = Path(file_path)
-    output_path = Path(OUTPUT_DIRECTORY) / file_path.name
+    output_path = Path(OCR_CONFIG['output_directory']) / file_path.name
 
     log.info("[watcher] " + "-" * 20)
     log.info(f'[watcher] New file: {file_path}. Waiting until fully loaded...')
@@ -65,20 +83,18 @@ def execute_ocrmypdf(file_path):
         return
     log.info(f'[watcher] Attempting to OCRmyPDF to: {output_path}')
 
-    if BACKUP_DIRECTORY:
-        backup_path = Path(BACKUP_DIRECTORY) / file_path.name
+    if OCR_CONFIG['backup_directory']:
+        backup_path = Path(OCR_CONFIG['backup_directory']) / file_path.name
         log.info(f'[watcher] Backing up file to: {backup_path}')
         shutil.copy2(file_path, backup_path)
 
     exit_code = ocrmypdf.ocr(
-        input_file=file_path,
-        output_file=output_path, 
-        deskew=DESKEW,
-        force_ocr=True,
-        **OCR_JSON_SETTINGS,
+        input_file=str(file_path),
+        output_file=str(output_path),
+        **ocr_args,
     )
     if exit_code == 0:
-        if ON_SUCCESS_DELETE:
+        if OCR_CONFIG['on_success_delete']:
             log.info(f'[watcher] OCR is done. Deleting: {file_path}')
             file_path.unlink()
         else:
@@ -88,31 +104,27 @@ def execute_ocrmypdf(file_path):
     else:
         log.info('[watcher] OCR is done')
 
-def autocorrect_match(match):
+def autocorrect_match(match, autocorrect_config):
     match = match.replace(" ", "")
 
-    if match.startswith('P0-'):
-        match = 'PO' + match[2:]
-    elif match.startswith('PQ-'):
-        match = 'PO' + match[2:]
-    elif match.startswith('RNW-'):
-        match = 'RNWS' + match[3:]
-    elif match.startswith('5P0-'):
-        match = 'SPO' + match[3:]
-    elif match.startswith('56R-'):
-        match = 'SGR' + match[3:]
+    for rule in autocorrect_config['rules']:
+        if re.match(rule['pattern'], match):
+            match = re.sub(rule['pattern'], rule['replacement'], match)
+            break
 
-    parts = re.match(r'([A-Z]+)[-]?(\d{1,2})[-]?(\d{1,4})', match)
+    parts = re.match(autocorrect_config['regex'], match)
 
     if parts is not None:
         prefix = parts.group(1)
         second_part = parts.group(2).zfill(2)
         last_part = parts.group(3).zfill(4)
 
-        second_part = second_part.replace("O", "0").replace("I", "1").replace("S", "5").replace("B", "8").replace("Z", "2").replace("G", "6")
-        last_part = last_part.replace("O", "0").replace("I", "1").replace("S", "5").replace("B", "8").replace("Z", "2").replace("G", "6")
+        for old, new in autocorrect_config['format']['second_part_mapping'].items():
+            second_part = second_part.replace(old, new)
+        for old, new in autocorrect_config['format']['last_part_mapping'].items():
+            last_part = last_part.replace(old, new)
 
-        if prefix in ["PO", "SPO", "RNWS", "SGR", "SSR"]:
+        if prefix in autocorrect_config['format']['prefix_mapping']:
             second_part = "2" + second_part[1:]
 
         corrected = f"{prefix}-{second_part}-{last_part}"
@@ -131,7 +143,7 @@ def process_pdf(path):
             matches = [match.upper() for match in matches]
 
             if matches:
-                matches = [autocorrect_match(match) for match in matches]
+                matches = [autocorrect_match(match, AUTOCORRECT_CONFIG) for match in matches]
                 matches = list(set(matches))
                 matches.sort()
             final_name = '_'.join(matches) + '.pdf'
@@ -139,9 +151,9 @@ def process_pdf(path):
             if len(final_name) > max_length:
                 final_name = final_name[:max_length] + '.pdf'
 
-            if os.path.exists(os.path.join(OUTPUT_DIRECTORY, final_name)):
+            if os.path.exists(os.path.join(OCR_CONFIG['output_directory'], final_name)):
                 num = 1
-                while os.path.exists(os.path.join(OUTPUT_DIRECTORY, final_name[:-4] + f'({num}).pdf')):
+                while os.path.exists(os.path.join(OCR_CONFIG['output_directory'], final_name[:-4] + f'({num}).pdf')):
                     num += 1
                 final_name = final_name[:-4] + f'({num}).pdf'
             os.rename(path_str, os.path.join(os.path.dirname(path_str), final_name))
@@ -149,10 +161,10 @@ def process_pdf(path):
         except Exception as e:
             print(f'[renamer] Error processing file: {path_str}. Error: {e}')
             if os.path.exists(path_str):
-                if not os.path.exists('ERROR'):
-                    os.mkdir('ERROR')
-                shutil.move(path_str, os.path.join('ERROR', os.path.basename(path_str)))
-                print(f'[renamer] Moved file with error to ERROR folder: {path_str}')
+                if not os.path.exists('error'):
+                    os.mkdir('error')
+                shutil.move(path_str, os.path.join('error', os.path.basename(path_str)))
+                print(f'[renamer] Moved file with error to error folder: {path_str}')
 
 class HandleObserverEvent(PatternMatchingEventHandler):
     def on_any_event(self, event):
@@ -168,45 +180,37 @@ def main():
     ocrmypdf.configure_logging(
         verbosity=(
             ocrmypdf.Verbosity.default
-            if LOGLEVEL != 'DEBUG'
+            if OCR_CONFIG['loglevel'] != 'DEBUG'
             else ocrmypdf.Verbosity.debug
         ),
         manage_root_logger=True,
     )
-    log.setLevel(LOGLEVEL)
+    log.setLevel(OCR_CONFIG['loglevel'])
     log.info(
         f"[watcher] Starting OCRmyPDF watcher with config:\n"
-        f"Input Directory: {INPUT_DIRECTORY}\n"
-        f"Output Directory: {OUTPUT_DIRECTORY}\n"
+        f"Input Directory: {OCR_CONFIG['input_directory']}\n"
+        f"Output Directory: {OCR_CONFIG['output_directory']}\n"
     )
     log.debug(
-        f"[watcher] INPUT_DIRECTORY: {INPUT_DIRECTORY}\n"
-        f"OUTPUT_DIRECTORY: {OUTPUT_DIRECTORY}\n"
-        f"ON_SUCCESS_DELETE: {ON_SUCCESS_DELETE}\n"
-        f"DESKEW: {DESKEW}\n"
-        f"ARGS: {OCR_JSON_SETTINGS}\n"
-        f"POLL_NEW_FILE_SECONDS: {POLL_NEW_FILE_SECONDS}\n"
-        f"RETRIES_LOADING_FILE: {RETRIES_LOADING_FILE}\n"
-        f"USE_POLLING: {USE_POLLING}\n"
-        f"LOGLEVEL: {LOGLEVEL}"
+        f"[watcher] OCR_CONFIG: {OCR_CONFIG}\n"
+        f"AUTOCORRECT_CONFIG: {AUTOCORRECT_CONFIG}\n"
     )
-    if 'input_file' in OCR_JSON_SETTINGS or 'output_file' in OCR_JSON_SETTINGS:
+    if 'input_file' in OCR_CONFIG['ocr_json_settings'] or 'output_file' in OCR_CONFIG['ocr_json_settings']:
         log.error('[watcher] OCR_JSON_SETTINGS should not specify input file or output file')
         sys.exit(1)
     
-    ensure_directory_exists(INPUT_DIRECTORY)
-    ensure_directory_exists(OUTPUT_DIRECTORY)
-    ensure_directory_exists(BACKUP_DIRECTORY)
-    
-    handler = HandleObserverEvent(patterns=PATTERNS)
-    
-    if USE_POLLING:
+    ensure_directory_exists(OCR_CONFIG['input_directory'])
+    ensure_directory_exists(OCR_CONFIG['output_directory'])
+    ensure_directory_exists(OCR_CONFIG['backup_directory'])
+
+    handler = HandleObserverEvent(patterns=OCR_CONFIG['patterns'])
+    if OCR_CONFIG['use_polling']:
         observer = PollingObserver()
     else:
         observer = Observer()
-    observer.schedule(handler, INPUT_DIRECTORY, recursive=True)
+    observer.schedule(handler, OCR_CONFIG['input_directory'], recursive=False)
     observer.start()
-    print(f'[watcher] Watching folder: {INPUT_DIRECTORY}')
+    log.info('[watcher] Watching for new files...')
     try:
         while True:
             time.sleep(1)

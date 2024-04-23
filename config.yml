@@ -1,13 +1,66 @@
-input_directory: 'input'
-output_directory: 'processed2'
-backup_directory: ''
-on_success_delete: false
-deskew: false
-ocr_json_settings: {}
-poll_new_file_seconds: 1
-use_polling: false
-retries_loading_file: 5
-loglevel: 'INFO'
-patterns:
-  - '*.pdf'
-  - '*.PDF'
+ocr:
+  input_directory: 'input'
+  output_directory: 'processed'
+  backup_directory: ''
+  on_success_delete: false
+  force_ocr: true
+  language: 'fra'
+  image_dpi:  # Image resolution in DPI for OCR
+  use_threads:  # Number of threads to use for parallel processing
+  author: ''  # PDF author
+  subject: ''  # PDF subject
+  rotate_pages: true  # Automatic page rotation
+  remove_background: false  # Background removal
+  deskew: true  # Page deskewing
+  oversample:   # Image oversampling for better OCR accuracy
+  optimize:   # PDF optimization level (0-3)
+  tesseract_thresholding: 'auto'  # Tesseract thresholding method (auto, otsu, adaptive-otsu, sauvola)
+  tesseract_timeout: 180.0  # Maximum timeout for Tesseract in seconds
+  rotate_pages_threshold: 2.0  # Confidence threshold for automatic page rotation
+  pdfa_image_compression: 'auto'  # Image compression for PDF/A (auto, jpeg, lossless, none)
+  progress_bar: false  # Progress bar display
+  jbig2_lossy:  # Lossy JBIG2 compression, useful for reducing PDF size
+  tesseract_oem:  # Tesseract engine mode (0-3), 3 is the default mode and the most accurate
+  ocr_json_settings: {}
+  poll_new_file_seconds:
+  use_polling: false
+  retries_loading_file: 5
+  loglevel: 'INFO'
+  patterns:
+    - '*.pdf'
+    - '*.PDF'
+
+autocorrect:
+  regex: '([A-Z]+)[-]?(\d{1,2})[-]?(\d{1,4})'
+  rules:
+    - pattern: '^P0-'
+      replacement: 'PO'
+    - pattern: '^PQ-'
+      replacement: 'PO'
+    - pattern: '^RNW-'
+      replacement: 'RNWS'
+    - pattern: '^5P0-'
+      replacement: 'SPO'
+    - pattern: '^56R-'
+      replacement: 'SGR'
+  format:
+    prefix_mapping:
+      - 'PO'
+      - 'SPO'
+      - 'RNWS'
+      - 'SGR'
+      - 'SSR'
+    second_part_mapping:
+      'O': '0'
+      'I': '1'
+      'S': '5'
+      'B': '8'
+      'Z': '2'
+      'G': '6'
+    last_part_mapping:
+      'O': '0'
+      'I': '1'
+      'S': '5'
+      'B': '8'
+      'Z': '2'
+      'G': '6'
