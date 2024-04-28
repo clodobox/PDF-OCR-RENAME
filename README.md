@@ -27,13 +27,24 @@ You just need to run the build commands below with "sudo" or use "Project" in Co
 6. Autocorrect this text string and rename the PDF with
 7. Moves file to final-output
 
-## Standalone
+## How to run it ?
 
-```
-python /src/app.py
-```
+### Standalone
 
-## Build docker container (not working)
+You need to have the following softwares installed to be able to run it:
+
+- Python (3.11 or higher)
+- [Poetry](https://python-poetry.org/)
+
+You can then do the following to run the application:
+
+1. Run `poetry install`
+2. Run `poetry run python src/app.py`
+
+You can also run `poetry shell` and then `python src/app.py` instead of running
+the app with `poetry run` if you wish.
+
+### Build docker container (not working)
 
 This version allows you to mount either NFS or local shares for input/output folders.
 You can choose what suits you best in docker-compose.yaml
