@@ -194,7 +194,9 @@ def process_pdf(path):
                 matches = [autocorrect_match(match, AUTOCORRECT_CONFIG) for match in matches]
                 matches = list(set(matches))
                 matches.sort()
-            final_name = '_'.join(matches) + '.pdf'
+                final_name = '_'.join(matches) + '.pdf'
+            if not matches:
+                return
             max_length = 150 - 4
             if len(final_name) > max_length:
                 final_name = final_name[:max_length] + '.pdf'
