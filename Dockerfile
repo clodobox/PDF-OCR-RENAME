@@ -14,7 +14,9 @@ RUN apt -y install \
     python3-poetry \
     python3-watchdog \
     tesseract-ocr-fra \
-    tesseract-ocr-deu
+    tesseract-ocr-deu \
+    pngquant \
+    jbig2
 RUN apt-get -y autoclean
 
 COPY . /app
