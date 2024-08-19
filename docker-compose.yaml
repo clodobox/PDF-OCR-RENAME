@@ -7,7 +7,7 @@ services:
     # Needed for matching user permission with host machine
     # You can use "id" command on linux terminal
     # "userID:groupeID"
-    # user: 1032:100
+    user: 1032:100
     volumes:
     #
     # Input / Output folder location (NFS / Local)
@@ -30,7 +30,7 @@ services:
     # Needed for matching user permission with host machine
     # You can use "id" command on linux terminal
     # "userID:groupeID"
-    # user: 1032:100
+    user: 1032:100
     volumes:
     #
     # Input / Output folder location (NFS / Local)
