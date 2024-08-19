@@ -7,7 +7,7 @@ services:
     # Needed for matching user permission with host machine
     # You can use "id" command on linux terminal
     # "userID:groupeID"
-    user: 1032:100
+    # user: 1032:100
     volumes:
     #
     # Input / Output folder location (NFS / Local)
@@ -30,7 +30,7 @@ services:
     # Needed for matching user permission with host machine
     # You can use "id" command on linux terminal
     # "userID:groupeID"
-    user: 1032:100
+    # user: 1032:100
     volumes:
     #
     # Input / Output folder location (NFS / Local)
@@ -48,35 +48,33 @@ services:
       - final-output-coc:/app/processed
       - log-coc:/app/log
 volumes:
-    # Volumes for BL
-    scan-input-bl:
-      driver_opts:
-        type: "nfs"
-        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-        device: ":/volume1/Docker/dexelpdfv3/scan-input"
-    log-bl:
-      driver_opts:
-        type: "nfs"
-        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-        device: ":/volume1/Docker/dexelpdfv3/log"
-    final-output-bl:
-      driver_opts:
-        type: "nfs"
-        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-        device: ":/volume1/Docker/dexelpdfv3/final-output"
-    # Volumes for CoC
-    scan-input-coc:
-      driver_opts:
-        type: "nfs"
-        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-        device: ":/volume1/Docker/CoC/scan-input"
-    log-coc:
-      driver_opts:
-        type: "nfs"
-        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-        device: ":/volume1/Docker/CoC/log"
-    final-output-coc:
-      driver_opts:
-        type: "nfs"
-        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-        device: ":/volume1/Docker/CoC/final-output"
+  scan-input-bl:
+    driver_opts:
+      type: "nfs"
+      o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+      device: ":/volume1/Docker/dexelpdfv3/scan-input"
+  log-bl:
+    driver_opts:
+      type: "nfs"
+      o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+      device: ":/volume1/Docker/dexelpdfv3/log"
+  final-output-bl:
+    driver_opts:
+      type: "nfs"
+      o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+      device: ":/volume1/Docker/dexelpdfv3/final-output"
+  scan-input-coc:
+    driver_opts:
+      type: "nfs"
+      o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+      device: ":/volume1/Docker/CoC/scan-input"
+  log-coc:
+    driver_opts:
+      type: "nfs"
+      o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+      device: ":/volume1/Docker/CoC/log"
+  final-output-coc:
+    driver_opts:
+      type: "nfs"
+      o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+      device: ":/volume1/Docker/CoC/final-output"
