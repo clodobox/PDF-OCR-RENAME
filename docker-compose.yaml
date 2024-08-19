@@ -15,28 +15,68 @@ services:
     #   + Use of NFS need "Polling - true" in .env
     #
     # local
-      - ./input:/app/input
-      - ./processed:/app/processed
-      - ./log:/app/log
+    #  - ./input:/app/input
+    #  - ./processed:/app/processed
+    #  - ./log:/app/log
     #
     # NFS
     #
-    #   - input:/app/input
-    #   - processed:/app/processed
-    #   - log:/app/log
-# volumes:
-#   scan-input:
-#     driver_opts:
-#       type: "nfs"
-#       o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-#       device: ":/volume1/Docker/PDF-OCR-RENAME/input"
-#   log:
-#     driver_opts:
-#       type: "nfs"
-#       o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-#       device: ":/volume1/Docker/PDF-OCR-RENAME/log"
-#   final-output:
-#     driver_opts:
-#       type: "nfs"
-#       o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
-#       device: ":/volume1/Docker/PDF-OCR-RENAME/output"
+       - input:/app/input
+       - processed:/app/processed
+       - log:/app/log
+  coc-ocr:
+    build:
+      context: .
+    # Needed for matching user permission with host machine
+    # You can use "id" command on linux terminal
+    # "userID:groupeID"
+    # user: 1032:100
+    volumes:
+    #
+    # Input / Output folder location (NFS / Local)
+    #   + Check "Volumes" bellow for NFS server details
+    #   + Use of NFS need "Polling - true" in .env
+    #
+    # local
+    #  - ./input:/app/input
+    #  - ./processed:/app/processed
+    #  - ./log:/app/log
+    #
+    # NFS
+    #
+       - input:/app/input
+       - processed:/app/processed
+       - log:/app/log
+volumes:
+    # Volumes for BL
+    scan-input-bl:
+      driver_opts:
+        type: "nfs"
+        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+        device: ":/volume1/Docker/dexelpdfv3/scan-input"
+    log-bl:
+      driver_opts:
+        type: "nfs"
+        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+        device: ":/volume1/Docker/dexelpdfv3/log"
+    final-output-bl:
+      driver_opts:
+        type: "nfs"
+        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+        device: ":/volume1/Docker/dexelpdfv3/final-output"
+    # Volumes for CoC
+    scan-input-coc:
+      driver_opts:
+        type: "nfs"
+        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+        device: ":/volume1/Docker/CoC/scan-input"
+    log-coc:
+      driver_opts:
+        type: "nfs"
+        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+        device: ":/volume1/Docker/CoC/log"
+    final-output-coc:
+      driver_opts:
+        type: "nfs"
+        o: "addr=192.168.45.29,nfsvers=4,sec=sys,proto=tcp"
+        device: ":/volume1/Docker/CoC/final-output"
