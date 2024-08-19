@@ -21,9 +21,9 @@ services:
     #
     # NFS
     #
-       - input:/app/input
-       - processed:/app/processed
-       - log:/app/log
+      - scan-input-bl:/app/input
+      - final-output-bl:/app/processed
+      - log-bl:/app/log
   coc-ocr:
     build:
       context: .
@@ -44,9 +44,9 @@ services:
     #
     # NFS
     #
-       - input:/app/input
-       - processed:/app/processed
-       - log:/app/log
+      - scan-input-coc:/app/input
+      - final-output-coc:/app/processed
+      - log-coc:/app/log
 volumes:
     # Volumes for BL
     scan-input-bl:
