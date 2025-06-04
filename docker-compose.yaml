@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   bl-ocr:
     build:
@@ -15,9 +13,9 @@ services:
     #   + Use of NFS need "Polling - true" in .env
     #
     # local
-    #  - ./input:/app/input
-    #  - ./processed:/app/processed
-    #  - ./log:/app/log
+    #  - ./input-bl:/app/input
+    #  - ./processed-bl:/app/processed
+    #  - ./log-bl:/app/log
     #
     # NFS
     #
@@ -38,9 +36,9 @@ services:
     #   + Use of NFS need "Polling - true" in .env
     #
     # local
-    #  - ./input:/app/input
-    #  - ./processed:/app/processed
-    #  - ./log:/app/log
+    #  - ./input-coc:/app/input
+    #  - ./processed-coc:/app/processed
+    #  - ./log-coc:/app/log
     #
     # NFS
     #
