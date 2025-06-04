@@ -21,22 +21,6 @@ You just need to run the build commands below with "sudo" or use "Project" in Co
 4. Moves file to processed
 
 ## How to run it ?
-
-### Standalone
-
-You need to have the following softwares installed to be able to run it:
-
-- Python (3.11 or higher)
-- [Poetry](https://python-poetry.org/)
-
-You can then do the following to run the application:
-
-1. Run `poetry install`
-2. Run `poetry run python src/app.py`
-
-You can also run `poetry shell` and then `python src/app.py` instead of running
-the app with `poetry run` if you wish.
-
 ### Build docker container
 
 This version allows you to mount either NFS or local shares for input/output folders.
