@@ -1,33 +1,32 @@
-FROM ubuntu:24.04
+FROM ubuntu:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-RUN mkdir -p $HOME/.cache/pypoetry/virtualenvs/
-RUN apt-get clean autoclean
-RUN apt-get autoremove --yes
-RUN apt -y update && apt -y upgrade
-RUN apt -y install \
+RUN apt-get clean autoclean && \
+    apt-get autoremove --yes && \
+    apt-get update && apt-get upgrade -y && \
+    apt-get install -y \
     ghostscript \
     ocrmypdf \
     python3 \
+    python3-venv \
+    python3-dev \
     python3-pdfminer \
-    python3-pip \
-    python3-watchdog \
     tesseract-ocr-fra \
     tesseract-ocr-deu \
     pngquant \
-    jbig2
-RUN pip3 install --break-system-packages pikepdf ocrmypdf pyyaml deskew watchdog
-RUN apt-get -y autoclean
+    jbig2 && \
+    apt-get autoclean -y && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY . /app
+RUN python3 -m venv $VIRTUAL_ENV
+
+RUN pip install --upgrade pip && \
+    pip install pikepdf ocrmypdf pyyaml deskew watchdog
 
 WORKDIR /app
+COPY . /app
 
-# RUN which poetry
-# RUN poetry --version
-
-# RUN poetry install
-
-# ENTRYPOINT ["poetry", "run", "python", "src/app.py"]
-ENTRYPOINT ["python3", "src/app.py"]
+ENTRYPOINT ["python", "src/app.py"]
