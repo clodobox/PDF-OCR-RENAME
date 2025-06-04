@@ -1,26 +1,30 @@
 ocr:
   input_directory: 'input'
   output_directory: 'processed'
-  backup_directory: ''
+  backup_directory: 'backup'
+  error_directory: 'error'
   on_success_delete: true
   force_ocr: true
   language: 'fra+eng+deu'
-  image_dpi:  # Image resolution in DPI for OCR
-  use_threads: True # Number of threads to use for parallel processing
-  author: ''  # PDF author
-  subject: ''  # PDF subject
-  rotate_pages: true  # Automatic page rotation
-  remove_background: false  # Background removal
-  deskew: true  # Page deskewing
-  oversample:   # Image oversampling for better OCR accuracy
-  optimize:   # PDF optimization level (0-3)
-  tesseract_thresholding: 'auto'  # Tesseract thresholding method (auto, otsu, adaptive-otsu, sauvola)
-  tesseract_timeout: 180.0  # Maximum timeout for Tesseract in seconds
-  rotate_pages_threshold: 2.0  # Confidence threshold for automatic page rotation
-  pdfa_image_compression: 'auto'  # Image compression for PDF/A (auto, jpeg, lossless, none)
-  progress_bar: false  # Progress bar display
-  jbig2_lossy:  # Lossy JBIG2 compression, useful for reducing PDF size
-  tesseract_oem:  # Tesseract engine mode (0-3), 3 is the default mode and the most accurate
+  image_dpi: 300
+  use_threads: true
+  author: ''
+  subject: ''
+  rotate_pages: true
+  remove_background: false
+  deskew: true
+  oversample: 300
+  optimize: 2
+  tesseract_thresholding: 'auto'
+  tesseract_timeout: 180.0
+  rotate_pages_threshold: 2.0
+  pdfa_image_compression: 'auto'
+  progress_bar: false
+  jpg_quality: 92
+  png_quality: 92
+  jbig2_lossy: false
+  jbig2_page_group_size: 1
+  tesseract_oem: 3
   ocr_json_settings: {}
   poll_new_file_seconds: 5
   use_polling: true
@@ -30,47 +34,129 @@ ocr:
     - '*.pdf'
     - '*.PDF'
 
-autocorrect:
-  regex: '([A-Z]+)[-]?(\d{1,2})[-]?(\d{1,4})'
-  rules:
-    - pattern: '^P0-'
-      replacement: 'PO'
-    - pattern: '^PQ-'
-      replacement: 'PO'
-    - pattern: '^RNW-'
-      replacement: 'RNWS'
-    - pattern: '^5P0-'
-      replacement: 'SPO'
-    - pattern: '^56R-'
-      replacement: 'SGR'
-  format:
-    prefix_mapping:
+rename:
+  enabled: true
+  # Pattern principal pour détecter les références dans le texte
+  search_patterns:
+    - pattern: '(?:P0|PO|SPO|RNWS|RNW|SGR|SSR|5P0|56R|PQ)[-\s]?\d{1,2}[-\s]?\d{1,4}'
+      flags: 'IGNORECASE'
+    # Vous pouvez ajouter d'autres patterns ici
+    # - pattern: 'REF[-\s]?\d{6}'
+    #   flags: 'IGNORECASE'
+  
+  # Configuration du formatage des noms de fichiers
+  filename:
+    separator: '_'              # Séparateur entre plusieurs références
+    extension: '.pdf'           # Extension du fichier
+    max_length: 150            # Longueur maximale du nom de fichier
+    duplicate_format: '({num})' # Format pour les doublons: filename(1).pdf
+    case: 'upper'              # 'upper', 'lower', ou 'original'
+    
+  # Nettoyage des matches avant traitement
+  cleaning:
+    remove_spaces: true
+    remove_special_chars: []   # Liste de caractères à supprimer
+    
+  # Extraction et validation des parties
+  extraction:
+    # Regex pour extraire les parties d'une référence
+    regex: '([A-Z]+)[-]?(\d{1,2})[-]?(\d{1,4})'
+    # Groupes: 1=prefix, 2=middle, 3=suffix
+    groups:
+      prefix:
+        index: 1
+        padding: 0              # Pas de padding pour le préfixe
+      middle:
+        index: 2
+        padding: 2              # Compléter à 2 chiffres
+        padding_char: '0'
+      suffix:
+        index: 3
+        padding: 4              # Compléter à 4 chiffres
+        padding_char: '0'
+    
+    # Format de sortie pour assembler les parties
+    output_format: '{prefix}-{middle}-{suffix}'
+    
+  # Règles de correction/remplacement
+  corrections:
+    # Corrections sur le match complet avant extraction
+    pre_extraction:
+      - pattern: '^P0(?=[-\d])'
+        replacement: 'PO'
+      - pattern: '^PQ(?=[-\d])'
+        replacement: 'PO'
+      - pattern: '^RNW(?!S)'
+        replacement: 'RNWS'
+      - pattern: '^5P0(?=[-\d])'
+        replacement: 'SPO'
+      - pattern: '^56R(?=[-\d])'
+        replacement: 'SGR'
+    
+    # Corrections sur les parties extraites
+    post_extraction:
+      # Corrections sur les caractères (OCR errors)
+      character_mapping:
+        middle:
+          'O': '0'
+          'I': '1'
+          'S': '5'
+          'B': '8'
+          'Z': '2'
+          'G': '6'
+          'o': '0'
+          'l': '1'
+        suffix:
+          'O': '0'
+          'I': '1'
+          'S': '5'
+          'B': '8'
+          'Z': '2'
+          'G': '6'
+          'o': '0'
+          'l': '1'
+      
+      # Règles spéciales basées sur le préfixe
+      prefix_rules:
+        - prefixes: ['PO', 'SPO']
+          rules:
+            - condition: 'middle[0] != "2"'
+              action: 'middle = "2" + middle[1:]'
+              description: 'Force le premier chiffre à 2 pour PO et SPO'
+  
+  # Validation des références
+  validation:
+    # Préfixes valides
+    valid_prefixes:
       - 'PO'
       - 'SPO'
       - 'RNWS'
       - 'SGR'
       - 'SSR'
-    second_part_mapping:
-      'O': '0'
-      'I': '1'
-      'S': '5'
-      'B': '8'
-      'Z': '2'
-      'G': '6'
-    last_part_mapping:
-      'O': '0'
-      'I': '1'
-      'S': '5'
-      'B': '8'
-      'Z': '2'
-      'G': '6'
+    
+    # Règles de validation pour rejeter des matches invalides
+    rules:
+      - name: 'middle_range'
+        field: 'middle'
+        type: 'range'
+        min: 1
+        max: 99
+      - name: 'suffix_range'
+        field: 'suffix'
+        type: 'range'
+        min: 1
+        max: 9999
+      - name: 'prefix_valid'
+        field: 'prefix'
+        type: 'in_list'
+        list: 'valid_prefixes'  # Référence à la liste ci-dessus
 
 logging:
   directory: 'log'
   filename: 'ocr.log'
   level: 'INFO'
-  format: '%(asctime)s - %(levelname)s - %(message)s'
-  mode: 'single'  # 'daily' pour un log par jour, 'single' pour un seul fichier log
-  max_size: 10485760  # Taille maximale du fichier log en octets (10 MB ici)
-  backup_count: 5  # Nombre de fichiers log à conserver
-  retention_days: 30  # Supprimer les logs plus vieux que 30 jours
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  mode: 'daily'
+  max_size: 10485760
+  backup_count: 5
+  retention_days: 30
